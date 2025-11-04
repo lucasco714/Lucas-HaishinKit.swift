@@ -1,7 +1,7 @@
 import Foundation
 
 /// Strategy for adapting bitrate based on network conditions.
-public enum AdaptiveBitrateStrategy {
+public enum AdaptiveBitrateStrategy: Codable {
     /// No adaptive bitrate adjustment.
     case none
     /// Gradual bitrate adjustment based on network throughput.
