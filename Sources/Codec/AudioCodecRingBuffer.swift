@@ -9,6 +9,9 @@ final class AudioCodecRingBuffer {
 
     static let numSamples: UInt32 = 1024
     static let maxBuffers: Int = 6
+    // Optimized buffer size for lower latency
+    static let lowLatencyNumSamples: UInt32 = 512
+    static let lowLatencyMaxBuffers: Int = 4
 
     var isReady: Bool {
         numSamples == index
