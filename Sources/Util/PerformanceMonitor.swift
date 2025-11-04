@@ -27,6 +27,9 @@ public class PerformanceMonitor {
     /// Performance warning threshold callback.
     public var onPerformanceWarning: ((String) -> Void)?
     
+    /// Expected frame rate for performance monitoring (default: 30 FPS).
+    public var expectedFrameRate: Double = 30.0
+    
     private var frameTimestamps: [TimeInterval] = []
     private let maxFrameHistory = 60
     private var lastFrameTime: TimeInterval?
@@ -53,7 +56,7 @@ public class PerformanceMonitor {
         
         // Check for frame drops
         if let lastTime = lastFrameTime {
-            let expectedInterval = 1.0 / 30.0 // Assuming 30 FPS target
+            let expectedInterval = 1.0 / expectedFrameRate
             let actualInterval = now - lastTime
             if actualInterval > expectedInterval * 1.5 {
                 metrics.droppedFrames += 1
@@ -66,7 +69,8 @@ public class PerformanceMonitor {
         metrics.videoEncodingTimeMs = duration * 1000
         
         // Check if encoding is taking too long
-        if duration > 0.033 { // More than 33ms (30 FPS threshold)
+        let maxEncodingTime = 1.0 / expectedFrameRate
+        if duration > maxEncodingTime {
             onPerformanceWarning?("Video encoding taking too long: \(duration * 1000)ms")
         }
     }

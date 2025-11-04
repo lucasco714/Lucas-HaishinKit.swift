@@ -10,6 +10,11 @@ public struct AudioCodecSettings: Codable {
     public var bitRate: Int
     /// Specifies whether to use low latency mode with smaller buffers.
     public var lowLatencyMode: Bool
+    
+    // Constants for bitrate adjustment
+    private static let adjustmentStep = 5
+    private static let minAudioBitrate = 8_000
+    private static let maxAudioBitrate = 64_000
 
     /// Create an new AudioCodecSettings instance.
     public init(bitRate: Int = 32 * 1000, lowLatencyMode: Bool = false) {
@@ -40,7 +45,7 @@ public struct AudioCodecSettings: Codable {
         // Gradually adjust towards recommended bitrate
         let targetBitrate = Int(recommendedBitrate)
         let diff = targetBitrate - bitRate
-        let step = diff / 5 // Adjust by 20% each time
-        bitRate = max(8_000, min(64_000, bitRate + step))
+        let step = diff / Self.adjustmentStep
+        bitRate = max(Self.minAudioBitrate, min(Self.maxAudioBitrate, bitRate + step))
     }
 }

@@ -49,7 +49,7 @@ public enum AdaptiveBitrateStrategy: Codable {
 }
 
 /// Network condition monitoring for adaptive streaming.
-public class NetworkConditionMonitor {
+public struct NetworkConditionMonitor {
     /// Threshold for poor network detection (bytes per second).
     public static let poorNetworkThreshold: Int32 = 50_000
     /// Threshold for good network detection (bytes per second).

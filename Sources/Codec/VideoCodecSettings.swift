@@ -87,10 +87,13 @@ public struct VideoCodecSettings: Codable {
             return
         }
         
-        let targetBitrate = bitRate
+        // Calculate recommended bitrate based on network quality
+        let quality = NetworkConditionMonitor.estimateQuality(bytesPerSecond: networkThroughput)
+        let recommendedBitrate = NetworkConditionMonitor.recommendedBitrate(for: quality, isVideo: true)
+        
         let adjustedBitrate = adaptiveBitrateStrategy.adjustBitrate(
             currentBitrate: bitRate,
-            targetBitrate: targetBitrate,
+            targetBitrate: recommendedBitrate,
             networkThroughput: networkThroughput
         )
         
