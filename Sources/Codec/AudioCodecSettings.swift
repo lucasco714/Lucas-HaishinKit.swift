@@ -8,10 +8,13 @@ public struct AudioCodecSettings: Codable {
 
     /// Specifies the bitRate of audio output.
     public var bitRate: Int
+    /// Specifies whether to use low latency mode with smaller buffers.
+    public var lowLatencyMode: Bool
 
     /// Create an new AudioCodecSettings instance.
-    public init(bitRate: Int = 32 * 1000) {
+    public init(bitRate: Int = 32 * 1000, lowLatencyMode: Bool = false) {
         self.bitRate = bitRate
+        self.lowLatencyMode = lowLatencyMode
     }
 
     func apply(_ converter: AVAudioConverter?, oldValue: AudioCodecSettings?) {
@@ -27,5 +30,17 @@ public struct AudioCodecSettings: Codable {
             })?.intValue ?? bitRate
             converter.bitRate = min(maxAvailableBitRate, max(minAvailableBitRate, bitRate))
         }
+    }
+    
+    /// Adjust bitrate based on network conditions.
+    mutating func adjustBitrateForNetwork(networkThroughput: Int32) {
+        let quality = NetworkConditionMonitor.estimateQuality(bytesPerSecond: networkThroughput)
+        let recommendedBitrate = NetworkConditionMonitor.recommendedBitrate(for: quality, isVideo: false)
+        
+        // Gradually adjust towards recommended bitrate
+        let targetBitrate = Int(recommendedBitrate)
+        let diff = targetBitrate - bitRate
+        let step = diff / 5 // Adjust by 20% each time
+        bitRate = max(8_000, min(64_000, bitRate + step))
     }
 }

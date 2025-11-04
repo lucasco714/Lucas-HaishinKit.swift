@@ -429,6 +429,31 @@ open class RTMPStream: NetStream {
         currentFPS = frameCount
         frameCount = 0
         info.on(timer: timer)
+        
+        // Adaptive bitrate adjustment based on network conditions
+        if let connection = rtmpConnection {
+            let networkThroughput = connection.currentBytesOutPerSecond
+            adjustBitrateForNetwork(networkThroughput: networkThroughput)
+        }
+    }
+    
+    /// Adjust encoding bitrate based on network conditions.
+    private func adjustBitrateForNetwork(networkThroughput: Int32) {
+        lockQueue.async {
+            // Adjust video bitrate
+            var videoSettings = self.mixer.videoIO.codec.settings
+            videoSettings.adjustBitrateForNetwork(networkThroughput: networkThroughput)
+            if videoSettings.bitRate != self.mixer.videoIO.codec.settings.bitRate {
+                self.mixer.videoIO.codec.settings = videoSettings
+            }
+            
+            // Adjust audio bitrate
+            var audioSettings = self.mixer.audioIO.codec.settings
+            audioSettings.adjustBitrateForNetwork(networkThroughput: networkThroughput)
+            if audioSettings.bitRate != self.mixer.audioIO.codec.settings.bitRate {
+                self.mixer.audioIO.codec.settings = audioSettings
+            }
+        }
     }
 
     private func didChangeReadyState(_ readyState: ReadyState, oldValue: ReadyState) {

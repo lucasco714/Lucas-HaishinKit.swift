@@ -36,7 +36,7 @@ public class AudioCodec {
         }
     }
     var effects: Set<AudioEffect> = []
-    var lockQueue = DispatchQueue(label: "com.haishinkit.HaishinKit.AudioCodec.lock")
+    var lockQueue = DispatchQueue(label: "com.haishinkit.HaishinKit.AudioCodec.lock", qos: .userInitiated)
     var inSourceFormat: AudioStreamBasicDescription? {
         didSet {
             guard var inSourceFormat, inSourceFormat != oldValue else {
@@ -69,11 +69,15 @@ public class AudioCodec {
                 for effect in effects {
                     effect.execute(ringBuffer.current, presentationTimeStamp: ringBuffer.presentationTimeStamp)
                 }
+                let startTime = Date()
                 var error: NSError?
                 audioConverter.convert(to: buffer, error: &error) { _, status in
                     status.pointee = .haveData
                     return ringBuffer.current
                 }
+                let encodingDuration = Date().timeIntervalSince(startTime)
+                PerformanceMonitor.shared.recordAudioEncoding(duration: encodingDuration)
+                
                 if let error {
                     delegate?.audioCodec(self, errorOccurred: .failedToConvert(error: error))
                 } else {

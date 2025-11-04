@@ -27,9 +27,9 @@ public protocol NetStreamDelegate: AnyObject {
 
 /// The `NetStream` class is the foundation of a RTMPStream, HTTPStream.
 open class NetStream: NSObject {
-    /// The lockQueue.
+    /// The lockQueue with optimized QoS for real-time streaming.
     public let lockQueue: DispatchQueue = {
-        let queue = DispatchQueue(label: "com.haishinkit.HaishinKit.NetStream.lock")
+        let queue = DispatchQueue(label: "com.haishinkit.HaishinKit.NetStream.lock", qos: .userInitiated)
         queue.setSpecific(key: queueKey, value: queueValue)
         return queue
     }()

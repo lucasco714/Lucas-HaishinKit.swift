@@ -89,7 +89,7 @@ public class VideoCodec {
     /// The running value indicating whether the VideoCodec is running.
     public private(set) var isRunning: Atomic<Bool> = .init(false)
 
-    var lockQueue = DispatchQueue(label: "com.haishinkit.HaishinKit.VideoCodec.lock")
+    var lockQueue = DispatchQueue(label: "com.haishinkit.HaishinKit.VideoCodec.lock", qos: .userInitiated)
 
     var formatDescription: CMFormatDescription? {
         didSet {
@@ -135,11 +135,15 @@ public class VideoCodec {
         if invalidateSession {
             session = VTSessionMode.compression.makeSession(self)
         }
+        let startTime = Date()
         _ = session?.encodeFrame(
             imageBuffer,
             presentationTimeStamp: presentationTimeStamp,
             duration: duration
         ) { [unowned self] status, _, sampleBuffer in
+            let encodingDuration = Date().timeIntervalSince(startTime)
+            PerformanceMonitor.shared.recordFrameEncoding(duration: encodingDuration)
+            
             guard let sampleBuffer, status == noErr else {
                 delegate?.videoCodec(self, errorOccurred: .failedToFlame(status: status))
                 return

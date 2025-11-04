@@ -23,6 +23,10 @@ public struct VideoCodecSettings: Codable {
     public var profileLevel: String
     /// Specifies  the HardwareEncoder is enabled(TRUE), or not(FALSE) for macOS.
     public var isHardwareEncoderEnabled = true
+    /// Specifies the adaptive bitrate strategy.
+    public var adaptiveBitrateStrategy: AdaptiveBitrateStrategy = .none
+    /// Specifies whether to enable software encoding fallback for older devices.
+    public var enableSoftwareFallback = true
 
     var expectedFrameRate: Float64 = 30
 
@@ -35,7 +39,9 @@ public struct VideoCodecSettings: Codable {
         scalingMode: ScalingMode = .trim,
         bitRateMode: VideoCodec.BitRateMode = .average,
         allowFrameReordering: Bool? = nil,
-        isHardwareEncoderEnabled: Bool = true
+        isHardwareEncoderEnabled: Bool = true,
+        adaptiveBitrateStrategy: AdaptiveBitrateStrategy = .none,
+        enableSoftwareFallback: Bool = true
     ) {
         self.videoSize = videoSize
         self.profileLevel = profileLevel
@@ -45,6 +51,8 @@ public struct VideoCodecSettings: Codable {
         self.bitRateMode = bitRateMode
         self.allowFrameReordering = allowFrameReordering
         self.isHardwareEncoderEnabled = isHardwareEncoderEnabled
+        self.adaptiveBitrateStrategy = adaptiveBitrateStrategy
+        self.enableSoftwareFallback = enableSoftwareFallback
     }
 
     func invalidateSession(_ rhs: VideoCodecSettings) -> Bool {
@@ -70,6 +78,24 @@ public struct VideoCodecSettings: Codable {
             if let status = codec.session?.setOption(option), status != noErr {
                 codec.delegate?.videoCodec(codec, errorOccurred: .failedToSetOption(status: status, option: option))
             }
+        }
+    }
+    
+    /// Adjust bitrate based on network conditions.
+    mutating func adjustBitrateForNetwork(networkThroughput: Int32) {
+        guard adaptiveBitrateStrategy != .none else {
+            return
+        }
+        
+        let targetBitrate = bitRate
+        let adjustedBitrate = adaptiveBitrateStrategy.adjustBitrate(
+            currentBitrate: bitRate,
+            targetBitrate: targetBitrate,
+            networkThroughput: networkThroughput
+        )
+        
+        if adjustedBitrate != bitRate {
+            bitRate = adjustedBitrate
         }
     }
 
